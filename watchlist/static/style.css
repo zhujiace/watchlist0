@@ -134,3 +134,25 @@ input[name=year] {
 .inline-form {
     display: inline;
 }
+
+a {
+    TEXT-DECORATION: none
+} /*设置a标签的颜色，除去下划线*/
+
+a:hover {
+    color: #ffffff;
+    background: #000000
+}/*设计a标签的点击使得颜色，看起来就有点击的质感*/
+
+.DownButtonNormal{ /*设计该类的所有格式*/
+    height: 18px;
+    line-height: 18px;
+    padding: 0 11px;
+    color:#000000;
+    background: rgb(255, 255, 255);
+    border: 1px #000000 solid;
+    border-radius: 3px;
+    display: inline-block;
+    font-size: 12px;
+    outline: none;
+ }

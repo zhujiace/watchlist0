@@ -11,31 +11,20 @@
             <option>{{ beat.name }}</option>
             {% endfor %}
         </datalist>
-    <input class="btn" type="submit" name="submit" value="Submit">
+    Delay<br>
+    <input id="Pos" type="number" name="pos" value="0" autocomplete="off" required>ms<br><br>
+    Speed<br>
+    <input id="Speed" type="text" name="speed" value="1" autocomplete="off" required><br><br>
+    Volume<br>
+    <input id="Volume" type="number" name="vol" value="0" autocomplete="off" required><br>
+    (注：为被覆盖音频的音量)<br><br>
+    <input class="btn" type="submit" name="submit" value="Submit"><br><br>
 </form>
+
+{% if filename != "None "%}
+Audition<br>
+<audio src="{{ url_for('static',filename='Mixed/'+filename) }}" controls></audio><br><br>
+<a class="DownButtonNormal" name="DownLoadHistEvent" download="{{filename}}" href="{{url_for('static',filename='Mixed/'+filename)}}">Download</a>
+{% endif %}
+
 {% endblock %}
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<form id="form1" method="post" action="/api/upload" enctype="multipart/form-data">
-    <div>
-        <input id="File1" type="file" name="myfile" autocomplete="off" required/>
-        <input id="File2" type="text" name="beat" list="typelist" placeholder="请选择" autocomplete="off" required>
-        <datalist id="typelist">
-            {% for beat in beats %}
-            <option>{{ beat.name }}</option>
-            {% endfor %}
-        </datalist>
-        <input type="submit">提交</input>
-        
-    </div>    
-</form>
-    {% for message in get_flashed_messages() %}
-    <div class="alert">{{ message }}</div>
-    {% endfor %}
-</body>
-</html> -->

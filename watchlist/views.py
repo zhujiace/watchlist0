@@ -118,10 +118,27 @@ from flask import send_from_directory
 from watchlist.models import Beat
 
 from pydub import AudioSegment
-def Mixer(filepath1,filepath2,filename):
+from pydub import effects
+
+def speed_change(sound, speed=1.0):
+    # Manually override the frame_rate. This tells the computer how many
+    # samples to play per second
+    sound_with_altered_frame_rate = sound._spawn(sound.raw_data, overrides={
+        "frame_rate": int(sound.frame_rate * speed)
+    })
+
+    # convert the sound with altered frame rate to a standard frame rate
+    # so that regular playback programs will work right. They often only
+    # know how to play audio at standard frame rate (like 44.1k)
+    return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
+
+def Mixer(filepath1,filepath2,filename,delay,volume,speed):
     sound1=AudioSegment.from_wav(filepath1)
     sound2=AudioSegment.from_wav(filepath2)
-    soundOutput=sound1.overlay(sound2)
+    sound2_speed_changed=speed_change(sound2,speed)
+    # sound1_speed_changed=speed_change(sound1,speed)
+    soundOutput=sound1.overlay(sound2_speed_changed,position=delay,gain_during_overlay=volume)
+    # soundOutput=sound1_speed_changed
     soundOutput.export(filename,format="wav")
 
 UPLOAD_FOLDER = 'static/uploads'
@@ -139,20 +156,30 @@ app.config['OUT_FOLDER'] = OUT_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-# 具有上传功能的页面
 @app.route('/upload')
-def upload_test():
+def upload_test_0():
     beats=Beat.query.all()
-    return render_template('upload2.html',beats=beats)
+    return render_template('upload2.html',beats=beats, filename="None")
 
-@app.route('/api', methods=['POST'], strict_slashes=False)
-def api_upload():
+# 具有上传功能的页面
+@app.route('/upload/<filename>')
+def upload_test(filename):
     beats=Beat.query.all()
+    return render_template('upload2.html',beats=beats, filename=filename)
+
+@app.route('/api', methods=['GET','POST'], strict_slashes=False)
+def api_upload():
     file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])  # 拼接成合法文件夹地址
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)  # 文件夹不存在就创建
-    f=request.files['myfile']  # 从表单的file字段获取文件，myfile为该表单的name值
-    b=request.form.get('beat')
+    f = request.files['myfile']  # 从表单的file字段获取文件，myfile为该表单的name值
+    b = request.form.get('beat')
+    d = int(request.form.get('pos'))
+    delay= d
+    s = request.form.get('speed')
+    speed = s
+    v = request.form.get('vol')
+    volume = v
     if f and allowed_file(f.filename):  # 判断是否是允许上传的文件类型
         fname=f.filename
         ext = fname.rsplit('.', 1)[1]  # 获取文件后缀
@@ -164,24 +191,22 @@ def api_upload():
 
         beats_folder = os.path.join(basedir, app.config['BEATS_FOLDER'])
         filepath2 = os.path.join(beats_folder, b)
-        flash(filepath2)
+        # flash(filepath2)
 
-        mixed_name = 'mixed.' + ext
+        mixed_name = str(unix_time) + '_mixed.' + ext
         mixed_folder = os.path.join(basedir, app.config['OUT_FOLDER'])
         filepath3 = os.path.join(mixed_folder, mixed_name)
-        flash(filepath3)
+        # flash(filepath3)
 
-        Mixer(filepath1,filepath2,filepath3)
+        Mixer(filepath1,filepath2,filepath3,delay,volume,float(speed))
 
         flash("上传成功")
-        #return render_template('upload2.html',beats=beats)
-        return redirect(url_for('downloader',filename='mixed.wav'))
-        # return jsonify({"errno": 0, "errmsg": "上传成功"})
-        
+        # return render_template('upload2.html',beats=beats,filepath=filepath3)
+        return redirect(url_for('upload_test',filename=mixed_name))
     else:
         flash("上传失败")
-        return render_template('upload2.html',beats=beats)
-        # return jsonify({"errno": 1001, "errmsg": "上传失败"})
+        # return render_template('upload2.html',beats=beats)
+        return redirect(url_for('upload_test_0'))
 
 #文件下载
 @app.route("/download/<path:filename>")
