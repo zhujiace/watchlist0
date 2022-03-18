@@ -132,19 +132,24 @@ def speed_change(sound, speed=1.0):
     # know how to play audio at standard frame rate (like 44.1k)
     return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
 
-def Mixer(filepath1,filepath2,filename,delay,volume,speed):
-    sound1=AudioSegment.from_wav(filepath1)
+def Mixer(filepath1,format,filepath2,filename,delay,volume,speed,speed2):
+    if format=='mp3':
+        sound1=AudioSegment.from_mp3(filepath1)
+    elif format=='wav':
+        sound1=AudioSegment.from_wav(filepath1)
     sound2=AudioSegment.from_wav(filepath2)
     sound2_speed_changed=speed_change(sound2,speed)
     # sound1_speed_changed=speed_change(sound1,speed)
-    soundOutput=sound1.overlay(sound2_speed_changed,position=delay,gain_during_overlay=volume)
+    soundtmp=sound1.overlay(sound2_speed_changed,position=delay,gain_during_overlay=volume)
+    # soundOutput=sound1.overlay(sound2_speed_changed,position=delay,gain_during_overlay=volume)
+    soundOutput=speed_change(soundtmp,speed)
     # soundOutput=sound1_speed_changed
     soundOutput.export(filename,format="wav")
 
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER  # 设置文件上传的目标文件夹
 basedir = os.path.abspath(os.path.dirname(__file__))  # 获取当前项目的绝对路径
-ALLOWED_EXTENSIONS = set(['wav'])  # 允许上传的文件后缀
+ALLOWED_EXTENSIONS = set(['wav','mp3'])  # 允许上传的文件后缀
 
 BEATS_FOLDER = 'static/beats'
 app.config['BEATS_FOLDER'] = BEATS_FOLDER
@@ -178,6 +183,8 @@ def api_upload():
     delay= d
     s = request.form.get('speed')
     speed = s
+    s = request.form.get('speed2')
+    speed2 = s
     v = request.form.get('vol')
     volume = v
     if f and allowed_file(f.filename):  # 判断是否是允许上传的文件类型
@@ -198,7 +205,7 @@ def api_upload():
         filepath3 = os.path.join(mixed_folder, mixed_name)
         # flash(filepath3)
 
-        Mixer(filepath1,filepath2,filepath3,delay,volume,float(speed))
+        Mixer(filepath1,ext,filepath2,filepath3,delay,volume,float(speed),float(speed2))
 
         flash("上传成功")
         # return render_template('upload2.html',beats=beats,filepath=filepath3)
